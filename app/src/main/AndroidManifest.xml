@@ -6,7 +6,7 @@
         android:icon="@mipmap/ic_launcher"
 
 Commit changes بزنید.
-        android:label="کتابخانه من"
+        android:label="تعزیه "
         android:supportsRtl="true">
 
         <activity
