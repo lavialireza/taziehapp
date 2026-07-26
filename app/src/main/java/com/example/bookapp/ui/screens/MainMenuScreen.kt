@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -15,6 +16,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun MainMenuScreen(
     onOpenTaziehList: () -> Unit,
+    onOpenSearch: () -> Unit,
     onOpenAbout: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenVersion: () -> Unit
@@ -27,6 +29,12 @@ fun MainMenuScreen(
                 headlineContent = { Text("لیست تعزیه‌ها") },
                 leadingContent = { Icon(Icons.Filled.List, contentDescription = null) },
                 modifier = Modifier.clickable { onOpenTaziehList() }
+            )
+            HorizontalDivider()
+            ListItem(
+                headlineContent = { Text("جستجو") },
+                leadingContent = { Icon(Icons.Filled.Search, contentDescription = null) },
+                modifier = Modifier.clickable { onOpenSearch() }
             )
             HorizontalDivider()
             ListItem(

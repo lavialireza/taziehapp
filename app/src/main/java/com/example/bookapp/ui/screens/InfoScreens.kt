@@ -4,10 +4,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.bookapp.BuildConfig
+import com.example.bookapp.data.Prefs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +37,13 @@ fun AboutScreen(onBack: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
+fun SettingsScreen(
+    darkMode: Boolean,
+    onDarkModeChange: (Boolean) -> Unit,
+    fontScale: Float,
+    onFontScaleChange: (Float) -> Unit,
+    onBack: () -> Unit
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -49,9 +57,42 @@ fun SettingsScreen(onBack: () -> Unit) {
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-            Text("این بخش فعلاً خالی است. هر تنظیمات دلخواه (مثلاً اندازه فونت) را می‌توان اینجا اضافه کرد.")
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("حالت شب (تیره)", style = MaterialTheme.typography.bodyLarge)
+                Switch(checked = darkMode, onCheckedChange = onDarkModeChange)
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            Text("سایز متن", style = MaterialTheme.typography.bodyLarge)
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                FontSizeOption("کوچک", 0.85f, fontScale, onFontScaleChange)
+                FontSizeOption("متوسط", 1.0f, fontScale, onFontScaleChange)
+                FontSizeOption("بزرگ", 1.3f, fontScale, onFontScaleChange)
+                FontSizeOption("خیلی بزرگ", 1.6f, fontScale, onFontScaleChange)
+            }
         }
     }
+}
+
+@Composable
+private fun FontSizeOption(label: String, value: Float, current: Float, onSelect: (Float) -> Unit) {
+    val selected = kotlin.math.abs(current - value) < 0.01f
+    FilterChip(
+        selected = selected,
+        onClick = { onSelect(value) },
+        label = { Text(label) }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
