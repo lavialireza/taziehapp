@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.withTransaction
 import org.json.JSONArray
 
 @Database(
@@ -53,35 +54,37 @@ suspend fun seedDatabaseIfEmpty(context: Context, db: AppDatabase) {
         .bufferedReader(Charsets.UTF_8).use { it.readText() }
     val fields = JSONArray(jsonText)
 
-    for (fi in 0 until fields.length()) {
-        val fieldObj = fields.getJSONObject(fi)
-        val fieldId = db.fieldDao().insert(FieldEntity(title = fieldObj.getString("title")))
+    db.withTransaction {
+        for (fi in 0 until fields.length()) {
+            val fieldObj = fields.getJSONObject(fi)
+            val fieldId = db.fieldDao().insert(FieldEntity(title = fieldObj.getString("title")))
 
-        val taziehs = fieldObj.getJSONArray("taziehs")
-        for (ti in 0 until taziehs.length()) {
-            val taziehObj = taziehs.getJSONObject(ti)
-            val taziehId = db.taziehDao().insert(
-                TaziehEntity(fieldId = fieldId, title = taziehObj.getString("title"))
-            )
-
-            val roles = taziehObj.getJSONArray("roles")
-            for (ri in 0 until roles.length()) {
-                val roleObj = roles.getJSONObject(ri)
-                val roleId = db.roleDao().insert(
-                    RoleEntity(taziehId = taziehId, title = roleObj.getString("title"))
+            val taziehs = fieldObj.getJSONArray("taziehs")
+            for (ti in 0 until taziehs.length()) {
+                val taziehObj = taziehs.getJSONObject(ti)
+                val taziehId = db.taziehDao().insert(
+                    TaziehEntity(fieldId = fieldId, title = taziehObj.getString("title"))
                 )
 
-                val sections = roleObj.getJSONArray("sections")
-                for (si in 0 until sections.length()) {
-                    val secObj = sections.getJSONObject(si)
-                    db.sectionDao().insert(
-                        SectionEntity(
-                            roleId = roleId,
-                            orderIndex = si,
-                            title = secObj.getString("title"),
-                            content = secObj.getString("content")
-                        )
+                val roles = taziehObj.getJSONArray("roles")
+                for (ri in 0 until roles.length()) {
+                    val roleObj = roles.getJSONObject(ri)
+                    val roleId = db.roleDao().insert(
+                        RoleEntity(taziehId = taziehId, title = roleObj.getString("title"))
                     )
+
+                    val sections = roleObj.getJSONArray("sections")
+                    for (si in 0 until sections.length()) {
+                        val secObj = sections.getJSONObject(si)
+                        db.sectionDao().insert(
+                            SectionEntity(
+                                roleId = roleId,
+                                orderIndex = si,
+                                title = secObj.getString("title"),
+                                content = secObj.getString("content")
+                            )
+                        )
+                    }
                 }
             }
         }

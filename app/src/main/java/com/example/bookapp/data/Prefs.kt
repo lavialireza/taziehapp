@@ -29,4 +29,30 @@ object Prefs {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit().putFloat(KEY_FONT_SCALE, scale).apply()
     }
+
+    private const val KEY_BOOKMARKS = "bookmarks"
+
+    fun getBookmarks(context: Context): Set<Long> {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getStringSet(KEY_BOOKMARKS, emptySet())?.mapNotNull { it.toLongOrNull() }?.toSet() ?: emptySet()
+    }
+
+    fun isBookmarked(context: Context, sectionId: Long): Boolean {
+        return getBookmarks(context).contains(sectionId)
+    }
+
+    fun toggleBookmark(context: Context, sectionId: Long): Boolean {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val current = getBookmarks(context).toMutableSet()
+        val nowBookmarked: Boolean
+        if (current.contains(sectionId)) {
+            current.remove(sectionId)
+            nowBookmarked = false
+        } else {
+            current.add(sectionId)
+            nowBookmarked = true
+        }
+        prefs.edit().putStringSet(KEY_BOOKMARKS, current.map { it.toString() }.toSet()).apply()
+        return nowBookmarked
+    }
 }

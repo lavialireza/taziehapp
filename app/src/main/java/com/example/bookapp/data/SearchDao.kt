@@ -34,4 +34,21 @@ interface SearchDao {
         """
     )
     suspend fun search(query: String): List<SearchResult>
+
+    @Query(
+        """
+        SELECT
+            sections.id AS sectionId,
+            sections.title AS sectionTitle,
+            roles.title AS roleTitle,
+            taziehs.title AS taziehTitle,
+            fields.title AS fieldTitle
+        FROM sections
+        INNER JOIN roles ON sections.roleId = roles.id
+        INNER JOIN taziehs ON roles.taziehId = taziehs.id
+        INNER JOIN fields ON taziehs.fieldId = fields.id
+        WHERE sections.id IN (:ids)
+        """
+    )
+    suspend fun getByIds(ids: List<Long>): List<SearchResult>
 }
