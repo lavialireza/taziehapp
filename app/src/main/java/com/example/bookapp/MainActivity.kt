@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import com.example.bookapp.data.Prefs
 import com.example.bookapp.ui.AppNavigation
+import com.example.bookapp.ui.theme.TaziehTypography
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,7 +34,7 @@ class MainActivity : ComponentActivity() {
                 fontScale = baseDensity.fontScale * fontScale
             )
 
-            MaterialTheme(colorScheme = colorScheme) {
+            MaterialTheme(colorScheme = colorScheme, typography = TaziehTypography) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     CompositionLocalProvider(LocalDensity provides scaledDensity) {
                         AppNavigation(
