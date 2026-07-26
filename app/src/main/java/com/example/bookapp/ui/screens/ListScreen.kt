@@ -1,21 +1,26 @@
 package com.example.bookapp.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 
 data class ListItemData(val id: Long, val title: String, val subtitle: String? = null)
 
 /**
- * صفحه فهرست عمومی: برای دسته‌بندی‌ها، زمینه‌ها، کتاب‌ها، فصل‌ها و بخش‌ها
- * استفاده می‌شود. فقط عنوان صفحه و لیست آیتم‌ها فرق می‌کند.
+ * صفحه فهرست عمومی به شکل کارت‌های گرافیکی: برای دسته‌بندی‌ها، زمینه‌ها،
+ * کتاب‌ها، فصل‌ها و بخش‌ها استفاده می‌شود.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,18 +45,57 @@ fun GenericListScreen(
         }
     ) { padding ->
         if (items.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = androidx.compose.ui.Alignment.Center) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 Text("موردی برای نمایش وجود ندارد")
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                contentPadding = PaddingValues(12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 items(items) { item ->
-                    ListItem(
-                        headlineContent = { Text(item.title) },
-                        supportingContent = item.subtitle?.let { { Text(it) } },
-                        modifier = Modifier.clickable { onItemClick(item) }
+                    ListCard(item = item, onClick = { onItemClick(item) })
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ListCard(item: ListItemData, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.primary),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.MenuBook,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+            Spacer(Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(item.title, style = MaterialTheme.typography.titleMedium)
+                if (item.subtitle != null) {
+                    Text(
+                        item.subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    HorizontalDivider()
                 }
             }
         }

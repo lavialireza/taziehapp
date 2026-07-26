@@ -3,6 +3,7 @@ package com.example.bookapp.ui.screens
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Search
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.dp
 fun MainMenuScreen(
     onOpenTaziehList: () -> Unit,
     onOpenSearch: () -> Unit,
+    onOpenBookmarks: () -> Unit,
     onOpenAbout: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenVersion: () -> Unit
@@ -35,6 +37,12 @@ fun MainMenuScreen(
                 headlineContent = { Text("جستجو") },
                 leadingContent = { Icon(Icons.Filled.Search, contentDescription = null) },
                 modifier = Modifier.clickable { onOpenSearch() }
+            )
+            HorizontalDivider()
+            ListItem(
+                headlineContent = { Text("علاقه‌مندی‌ها") },
+                leadingContent = { Icon(Icons.Filled.Favorite, contentDescription = null) },
+                modifier = Modifier.clickable { onOpenBookmarks() }
             )
             HorizontalDivider()
             ListItem(
