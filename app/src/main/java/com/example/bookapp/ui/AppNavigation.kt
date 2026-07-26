@@ -19,6 +19,7 @@ private const val ROUTE_SPLASH = "splash"
 private const val ROUTE_LOGIN = "login"
 private const val ROUTE_MAIN_MENU = "main_menu"
 private const val ROUTE_SEARCH = "search"
+private const val ROUTE_BOOKMARKS = "bookmarks"
 private const val ROUTE_ABOUT = "about"
 private const val ROUTE_SETTINGS = "settings"
 private const val ROUTE_VERSION = "version"
@@ -67,6 +68,7 @@ fun AppNavigation(
             MainMenuScreen(
                 onOpenTaziehList = { navController.navigate(ROUTE_FIELDS) },
                 onOpenSearch = { navController.navigate(ROUTE_SEARCH) },
+                onOpenBookmarks = { navController.navigate(ROUTE_BOOKMARKS) },
                 onOpenAbout = { navController.navigate(ROUTE_ABOUT) },
                 onOpenSettings = { navController.navigate(ROUTE_SETTINGS) },
                 onOpenVersion = { navController.navigate(ROUTE_VERSION) }
@@ -77,6 +79,19 @@ fun AppNavigation(
             SearchScreen(
                 onSearch = { query -> db.searchDao().search(query) },
                 onResultClick = { result -> navController.navigate("text/${result.sectionId}") },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(ROUTE_BOOKMARKS) {
+            var items by remember { mutableStateOf(listOf<com.example.bookapp.data.SearchResult>()) }
+            LaunchedEffect(Unit) {
+                val ids = com.example.bookapp.data.Prefs.getBookmarks(context).toList()
+                items = if (ids.isEmpty()) emptyList() else db.searchDao().getByIds(ids)
+            }
+            BookmarksScreen(
+                items = items,
+                onItemClick = { result -> navController.navigate("text/${result.sectionId}") },
                 onBack = { navController.popBackStack() }
             )
         }
@@ -162,12 +177,22 @@ fun AppNavigation(
             val sectionId = backStackEntry.arguments?.getString("sectionId")?.toLongOrNull() ?: 0L
             var title by remember { mutableStateOf("") }
             var content by remember { mutableStateOf("") }
+            var bookmarked by remember { mutableStateOf(com.example.bookapp.data.Prefs.isBookmarked(context, sectionId)) }
             LaunchedEffect(sectionId) {
                 val section = db.sectionDao().getById(sectionId)
                 title = section.title
                 content = section.content
+                bookmarked = com.example.bookapp.data.Prefs.isBookmarked(context, sectionId)
             }
-            TextScreen(title = title, content = content, onBack = { navController.popBackStack() })
+            TextScreen(
+                title = title,
+                content = content,
+                isBookmarked = bookmarked,
+                onToggleBookmark = {
+                    bookmarked = com.example.bookapp.data.Prefs.toggleBookmark(context, sectionId)
+                },
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }
