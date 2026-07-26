@@ -1,0 +1,32 @@
+package com.example.bookapp.data
+
+import android.content.Context
+
+/**
+ * ذخیره‌سازی ساده تنظیمات کاربر (حالت روز/شب و سایز فونت) با SharedPreferences.
+ */
+object Prefs {
+    private const val PREFS_NAME = "app_prefs"
+    private const val KEY_DARK_MODE = "dark_mode"
+    private const val KEY_FONT_SCALE = "font_scale" // 0.85f=کوچک, 1.0f=متوسط, 1.3f=بزرگ
+
+    fun isDarkMode(context: Context): Boolean {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getBoolean(KEY_DARK_MODE, false)
+    }
+
+    fun setDarkMode(context: Context, enabled: Boolean) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putBoolean(KEY_DARK_MODE, enabled).apply()
+    }
+
+    fun getFontScale(context: Context): Float {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getFloat(KEY_FONT_SCALE, 1.0f)
+    }
+
+    fun setFontScale(context: Context, scale: Float) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putFloat(KEY_FONT_SCALE, scale).apply()
+    }
+}

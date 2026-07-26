@@ -21,6 +21,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun taziehDao(): TaziehDao
     abstract fun roleDao(): RoleDao
     abstract fun sectionDao(): SectionDao
+    abstract fun searchDao(): SearchDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
