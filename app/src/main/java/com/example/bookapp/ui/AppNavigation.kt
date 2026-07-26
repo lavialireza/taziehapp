@@ -15,8 +15,10 @@ import com.example.bookapp.data.AppDatabase
 import com.example.bookapp.data.seedDatabaseIfEmpty
 import com.example.bookapp.ui.screens.*
 
+private const val ROUTE_SPLASH = "splash"
 private const val ROUTE_LOGIN = "login"
 private const val ROUTE_MAIN_MENU = "main_menu"
+private const val ROUTE_SEARCH = "search"
 private const val ROUTE_ABOUT = "about"
 private const val ROUTE_SETTINGS = "settings"
 private const val ROUTE_VERSION = "version"
@@ -27,7 +29,12 @@ private const val ROUTE_SECTIONS = "sections/{roleId}/{roleTitle}"
 private const val ROUTE_TEXT = "text/{sectionId}"
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(
+    darkMode: Boolean,
+    onDarkModeChange: (Boolean) -> Unit,
+    fontScale: Float,
+    onFontScaleChange: (Float) -> Unit
+) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
     val navController: NavHostController = rememberNavController()
@@ -37,7 +44,15 @@ fun AppNavigation() {
         seedDatabaseIfEmpty(context, db)
     }
 
-    NavHost(navController = navController, startDestination = ROUTE_LOGIN) {
+    NavHost(navController = navController, startDestination = ROUTE_SPLASH) {
+
+        composable(ROUTE_SPLASH) {
+            SplashScreen(onFinished = {
+                navController.navigate(ROUTE_LOGIN) {
+                    popUpTo(ROUTE_SPLASH) { inclusive = true }
+                }
+            })
+        }
 
         composable(ROUTE_LOGIN) {
             LoginScreen(onLoginSuccess = {
@@ -47,18 +62,37 @@ fun AppNavigation() {
             })
         }
 
-        // منوی اصلی: لیست تعزیه‌ها / درباره برنامه / تنظیمات / ورژن
+        // منوی اصلی: لیست تعزیه‌ها / جستجو / درباره برنامه / تنظیمات / ورژن
         composable(ROUTE_MAIN_MENU) {
             MainMenuScreen(
                 onOpenTaziehList = { navController.navigate(ROUTE_FIELDS) },
+                onOpenSearch = { navController.navigate(ROUTE_SEARCH) },
                 onOpenAbout = { navController.navigate(ROUTE_ABOUT) },
                 onOpenSettings = { navController.navigate(ROUTE_SETTINGS) },
                 onOpenVersion = { navController.navigate(ROUTE_VERSION) }
             )
         }
 
+        composable(ROUTE_SEARCH) {
+            SearchScreen(
+                onSearch = { query -> db.searchDao().search(query) },
+                onResultClick = { result -> navController.navigate("text/${result.sectionId}") },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
         composable(ROUTE_ABOUT) { AboutScreen(onBack = { navController.popBackStack() }) }
-        composable(ROUTE_SETTINGS) { SettingsScreen(onBack = { navController.popBackStack() }) }
+
+        composable(ROUTE_SETTINGS) {
+            SettingsScreen(
+                darkMode = darkMode,
+                onDarkModeChange = onDarkModeChange,
+                fontScale = fontScale,
+                onFontScaleChange = onFontScaleChange,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
         composable(ROUTE_VERSION) { VersionScreen(onBack = { navController.popBackStack() }) }
 
         // سطح ۱: فهرست زمینه‌ها
