@@ -82,3 +82,40 @@ private fun shareText(context: Context, title: String, content: String) {
     }
     context.startActivity(Intent.createChooser(intent, "اشتراک‌گذاری"))
 }
+
+/**
+ * حالت مطالعه حرفه‌ای: امکان سوایپ (کشیدن انگشت) بین بخش‌های یک نقش،
+ * بدون نیاز به برگشتن به فهرست بعد از هر بخش.
+ */
+@Composable
+fun TextPagerScreen(
+    sections: List<com.example.bookapp.data.SectionEntity>,
+    startIndex: Int,
+    isBookmarked: (Long) -> Boolean,
+    onToggleBookmark: (Long) -> Unit,
+    onPageShown: (Long) -> Unit,
+    onBack: () -> Unit
+) {
+    val pagerState = androidx.compose.foundation.pager.rememberPagerState(
+        initialPage = startIndex.coerceIn(0, (sections.size - 1).coerceAtLeast(0))
+    ) { sections.size }
+
+    androidx.compose.runtime.LaunchedEffect(pagerState.currentPage) {
+        if (sections.isNotEmpty()) {
+            onPageShown(sections[pagerState.currentPage].id)
+        }
+    }
+
+    androidx.compose.foundation.pager.HorizontalPager(state = pagerState) { page ->
+        val section = sections[page]
+        Column(Modifier.fillMaxSize()) {
+            TextScreen(
+                title = "${section.title}  (${page + 1}/${sections.size})",
+                content = section.content,
+                isBookmarked = isBookmarked(section.id),
+                onToggleBookmark = { onToggleBookmark(section.id) },
+                onBack = onBack
+            )
+        }
+    }
+}

@@ -6,6 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
@@ -27,6 +28,7 @@ fun MainMenuScreen(
     onOpenTaziehList: () -> Unit,
     onOpenSearch: () -> Unit,
     onOpenBookmarks: () -> Unit,
+    onOpenNotes: () -> Unit,
     onOpenAbout: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenVersion: () -> Unit,
@@ -90,6 +92,12 @@ fun MainMenuScreen(
                 headlineContent = { Text("علاقه‌مندی‌ها") },
                 leadingContent = { Icon(Icons.Filled.Favorite, contentDescription = null) },
                 modifier = Modifier.clickable { onOpenBookmarks() }
+            )
+            HorizontalDivider()
+            ListItem(
+                headlineContent = { Text("دفتر یادداشت") },
+                leadingContent = { Icon(Icons.Filled.Edit, contentDescription = null) },
+                modifier = Modifier.clickable { onOpenNotes() }
             )
             HorizontalDivider()
             ListItem(

@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.bookapp.BuildConfig
 import com.example.bookapp.data.Prefs
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,8 +56,13 @@ fun SettingsScreen(
     onDarkModeChange: (Boolean) -> Unit,
     fontScale: Float,
     onFontScaleChange: (Float) -> Unit,
+    onSyncContent: suspend () -> Result<Unit>,
     onBack: () -> Unit
 ) {
+    var syncing by remember { mutableStateOf(false) }
+    var syncMessage by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -93,6 +99,41 @@ fun SettingsScreen(
                 FontSizeOption("متوسط", 1.0f, fontScale, onFontScaleChange)
                 FontSizeOption("بزرگ", 1.3f, fontScale, onFontScaleChange)
                 FontSizeOption("خیلی بزرگ", 1.6f, fontScale, onFontScaleChange)
+            }
+
+            Spacer(Modifier.height(32.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(16.dp))
+
+            Text("بروزرسانی محتوا", style = MaterialTheme.typography.bodyLarge)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "اگر محتوای جدیدی به گیت‌هاب اضافه شده، با این دکمه بدون نیاز به نصب دوباره اپ، محتوا به‌روز می‌شود (نیاز به اینترنت دارد).",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(12.dp))
+            Button(
+                onClick = {
+                    syncing = true
+                    syncMessage = null
+                    scope.launch {
+                        val result = onSyncContent()
+                        syncing = false
+                        syncMessage = if (result.isSuccess) {
+                            "محتوا با موفقیت به‌روزرسانی شد ✅"
+                        } else {
+                            "خطا در بروزرسانی — اتصال اینترنت را بررسی کنید ❌"
+                        }
+                    }
+                },
+                enabled = !syncing
+            ) {
+                Text(if (syncing) "در حال بروزرسانی..." else "بروزرسانی محتوا از اینترنت")
+            }
+            syncMessage?.let {
+                Spacer(Modifier.height(8.dp))
+                Text(it, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
