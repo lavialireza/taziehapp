@@ -13,7 +13,13 @@ import com.example.bookapp.data.Prefs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AboutScreen(onBack: () -> Unit) {
+fun AboutScreen(
+    fieldsCount: Int,
+    taziehsCount: Int,
+    rolesCount: Int,
+    sectionsCount: Int,
+    onBack: () -> Unit
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -31,6 +37,13 @@ fun AboutScreen(onBack: () -> Unit) {
                 "این اپلیکیشن یک کتابخانه دیجیتال از متون تعزیه است که بر اساس " +
                         "زمینه، تعزیه، نقش و بخش دسته‌بندی شده است."
             )
+            Spacer(Modifier.height(20.dp))
+            Text("آمار مجموعه:", style = MaterialTheme.typography.titleSmall)
+            Spacer(Modifier.height(8.dp))
+            Text("$fieldsCount زمینه")
+            Text("$taziehsCount تعزیه")
+            Text("$rolesCount نقش")
+            Text("$sectionsCount بخش")
         }
     }
 }

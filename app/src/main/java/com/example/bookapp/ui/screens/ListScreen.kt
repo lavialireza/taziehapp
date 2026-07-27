@@ -70,34 +70,62 @@ private fun ListCard(item: ListItemData, onClick: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.primary),
-                contentAlignment = Alignment.Center
+        Box {
+            DecorativePattern(
+                modifier = Modifier.matchParentSize(),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.06f)
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    Icons.AutoMirrored.Filled.MenuBook,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimary
-                )
-            }
-            Spacer(Modifier.width(14.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(item.title, style = MaterialTheme.typography.titleMedium)
-                if (item.subtitle != null) {
-                    Text(
-                        item.subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.primary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.MenuBook,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
+                Spacer(Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(item.title, style = MaterialTheme.typography.titleMedium)
+                    if (item.subtitle != null) {
+                        Text(
+                            item.subtitle,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
+        }
+    }
+}
+
+/** یک الگوی هندسی ساده و ملایم (شبیه نقوش اسلیمی) که پشت کارت‌ها کشیده می‌شود. */
+@Composable
+private fun DecorativePattern(modifier: Modifier = Modifier, color: androidx.compose.ui.graphics.Color) {
+    androidx.compose.foundation.Canvas(modifier = modifier) {
+        val step = 28.dp.toPx()
+        var y = -step
+        while (y < size.height + step) {
+            var x = -step
+            while (x < size.width + step) {
+                drawCircle(
+                    color = color,
+                    radius = step / 2.2f,
+                    center = androidx.compose.ui.geometry.Offset(x, y),
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.2.dp.toPx())
+                )
+                x += step
+            }
+            y += step
         }
     }
 }
