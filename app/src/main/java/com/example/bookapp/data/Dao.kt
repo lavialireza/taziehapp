@@ -11,6 +11,9 @@ interface FieldDao {
 
     @Insert
     suspend fun insert(field: FieldEntity): Long
+
+    @Query("DELETE FROM fields")
+    suspend fun deleteAll()
 }
 
 @Dao
@@ -20,6 +23,9 @@ interface TaziehDao {
 
     @Insert
     suspend fun insert(tazieh: TaziehEntity): Long
+
+    @Query("DELETE FROM taziehs")
+    suspend fun deleteAll()
 }
 
 @Dao
@@ -29,6 +35,9 @@ interface RoleDao {
 
     @Insert
     suspend fun insert(role: RoleEntity): Long
+
+    @Query("DELETE FROM roles")
+    suspend fun deleteAll()
 }
 
 @Dao
@@ -41,4 +50,7 @@ interface SectionDao {
 
     @Insert
     suspend fun insert(section: SectionEntity): Long
+
+    @Query("DELETE FROM sections")
+    suspend fun deleteAll()
 }

@@ -6,15 +6,18 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.withTransaction
 import org.json.JSONArray
+import java.net.HttpURLConnection
+import java.net.URL
 
 @Database(
     entities = [
         FieldEntity::class,
         TaziehEntity::class,
         RoleEntity::class,
-        SectionEntity::class
+        SectionEntity::class,
+        NoteEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -23,6 +26,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun roleDao(): RoleDao
     abstract fun sectionDao(): SectionDao
     abstract fun searchDao(): SearchDao
+    abstract fun noteDao(): NoteDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
@@ -33,7 +37,12 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "bookapp.db"
-                ).build()
+                )
+                    // چون بین نسخه ۱ و ۲ فقط جدول یادداشت‌ها اضافه شده،
+                    // در صورت نبود Migration رسمی، دیتابیس محتوا از نو ساخته می‌شود
+                    // (بارگذاری اولیه دوباره از assets/sample_data.json انجام می‌شود)
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }
@@ -44,16 +53,54 @@ abstract class AppDatabase : RoomDatabase() {
 /**
  * داده‌های واقعی/نمونه را از فایل assets/sample_data.json می‌خواند
  * و در صورتی که دیتابیس خالی باشد، آن‌ها را وارد می‌کند.
- * ساختار JSON باید خروجی اسکریپت scripts/docx_to_json.py باشد:
- * زمینه -> تعزیه -> نقش -> بخش (با متن)
  */
 suspend fun seedDatabaseIfEmpty(context: Context, db: AppDatabase) {
     if (db.fieldDao().getAll().isNotEmpty()) return
 
     val jsonText = context.assets.open("sample_data.json")
         .bufferedReader(Charsets.UTF_8).use { it.readText() }
-    val fields = JSONArray(jsonText)
+    insertContentFromJson(db, jsonText)
+}
 
+/**
+ * محتوای فعلی (زمینه/تعزیه/نقش/بخش) را کامل پاک کرده و از یک متن JSON
+ * که از اینترنت دریافت شده، دوباره می‌سازد. برای «بروزرسانی محتوا بدون
+ * نیاز به ساخت نسخه جدید اپ» استفاده می‌شود.
+ * آدرس پیش‌فرض: فایل sample_data.json روی گیت‌هاب (شاخه main).
+ */
+suspend fun syncRemoteContent(
+    db: AppDatabase,
+    url: String = "https://raw.githubusercontent.com/lavialireza/taziehapp/main/app/src/main/assets/sample_data.json"
+): Result<Unit> {
+    return try {
+        val jsonText = withHttpGet(url)
+        db.withTransaction {
+            db.sectionDao().deleteAll()
+            db.roleDao().deleteAll()
+            db.taziehDao().deleteAll()
+            db.fieldDao().deleteAll()
+        }
+        insertContentFromJson(db, jsonText)
+        Result.success(Unit)
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+}
+
+private fun withHttpGet(urlString: String): String {
+    val connection = URL(urlString).openConnection() as HttpURLConnection
+    connection.connectTimeout = 15000
+    connection.readTimeout = 15000
+    connection.requestMethod = "GET"
+    return try {
+        connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+    } finally {
+        connection.disconnect()
+    }
+}
+
+private suspend fun insertContentFromJson(db: AppDatabase, jsonText: String) {
+    val fields = JSONArray(jsonText)
     db.withTransaction {
         for (fi in 0 until fields.length()) {
             val fieldObj = fields.getJSONObject(fi)
