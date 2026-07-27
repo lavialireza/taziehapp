@@ -51,4 +51,34 @@ interface SearchDao {
         """
     )
     suspend fun getByIds(ids: List<Long>): List<SearchResult>
+
+    @Query(
+        """
+        SELECT
+            sections.id AS sectionId,
+            sections.title AS sectionTitle,
+            roles.title AS roleTitle,
+            taziehs.title AS taziehTitle,
+            fields.title AS fieldTitle
+        FROM sections
+        INNER JOIN roles ON sections.roleId = roles.id
+        INNER JOIN taziehs ON roles.taziehId = taziehs.id
+        INNER JOIN fields ON taziehs.fieldId = fields.id
+        ORDER BY RANDOM()
+        LIMIT 1
+        """
+    )
+    suspend fun getRandomSection(): SearchResult?
+
+    @Query("SELECT COUNT(*) FROM fields")
+    suspend fun countFields(): Int
+
+    @Query("SELECT COUNT(*) FROM taziehs")
+    suspend fun countTaziehs(): Int
+
+    @Query("SELECT COUNT(*) FROM roles")
+    suspend fun countRoles(): Int
+
+    @Query("SELECT COUNT(*) FROM sections")
+    suspend fun countSections(): Int
 }

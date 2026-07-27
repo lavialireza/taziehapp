@@ -55,4 +55,24 @@ object Prefs {
         prefs.edit().putStringSet(KEY_BOOKMARKS, current.map { it.toString() }.toSet()).apply()
         return nowBookmarked
     }
+
+    private const val KEY_RECENT = "recent_sections"
+    private const val MAX_RECENT = 10
+
+    /** لیست شناسه‌های اخیراً مشاهده‌شده را از جدید به قدیم برمی‌گرداند */
+    fun getRecent(context: Context): List<Long> {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val raw = prefs.getString(KEY_RECENT, "") ?: ""
+        if (raw.isBlank()) return emptyList()
+        return raw.split(",").mapNotNull { it.toLongOrNull() }
+    }
+
+    fun addRecent(context: Context, sectionId: Long) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val current = getRecent(context).toMutableList()
+        current.remove(sectionId)
+        current.add(0, sectionId)
+        val trimmed = current.take(MAX_RECENT)
+        prefs.edit().putString(KEY_RECENT, trimmed.joinToString(",")).apply()
+    }
 }
