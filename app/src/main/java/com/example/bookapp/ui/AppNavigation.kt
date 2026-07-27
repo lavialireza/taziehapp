@@ -3,6 +3,7 @@ package com.example.bookapp.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -12,6 +13,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.bookapp.data.AppDatabase
+import com.example.bookapp.data.Prefs
+import com.example.bookapp.data.SearchResult
 import com.example.bookapp.data.seedDatabaseIfEmpty
 import com.example.bookapp.ui.screens.*
 
@@ -63,15 +66,32 @@ fun AppNavigation(
             })
         }
 
-        // منوی اصلی: لیست تعزیه‌ها / جستجو / درباره برنامه / تنظیمات / ورژن
+        // منوی اصلی: بیت تصادفی / آخرین‌ها / لیست تعزیه‌ها / جستجو / علاقه‌مندی‌ها / درباره / تنظیمات / ورژن
         composable(ROUTE_MAIN_MENU) {
+            var randomVerse by remember { mutableStateOf<SearchResult?>(null) }
+            var recentItems by remember { mutableStateOf(listOf<SearchResult>()) }
+
+            LaunchedEffect(Unit) {
+                randomVerse = db.searchDao().getRandomSection()
+                val ids = Prefs.getRecent(context)
+                if (ids.isNotEmpty()) {
+                    val fetched = db.searchDao().getByIds(ids)
+                    // حفظ ترتیب اخیرترین‌ها (فچ‌شده بر اساس ID، نه ترتیب اصلی)
+                    val byId = fetched.associateBy { it.sectionId }
+                    recentItems = ids.mapNotNull { byId[it] }
+                }
+            }
+
             MainMenuScreen(
+                randomVerse = randomVerse,
+                recentItems = recentItems,
                 onOpenTaziehList = { navController.navigate(ROUTE_FIELDS) },
                 onOpenSearch = { navController.navigate(ROUTE_SEARCH) },
                 onOpenBookmarks = { navController.navigate(ROUTE_BOOKMARKS) },
                 onOpenAbout = { navController.navigate(ROUTE_ABOUT) },
                 onOpenSettings = { navController.navigate(ROUTE_SETTINGS) },
-                onOpenVersion = { navController.navigate(ROUTE_VERSION) }
+                onOpenVersion = { navController.navigate(ROUTE_VERSION) },
+                onItemClick = { result -> navController.navigate("text/${result.sectionId}") }
             )
         }
 
@@ -84,9 +104,9 @@ fun AppNavigation(
         }
 
         composable(ROUTE_BOOKMARKS) {
-            var items by remember { mutableStateOf(listOf<com.example.bookapp.data.SearchResult>()) }
+            var items by remember { mutableStateOf(listOf<SearchResult>()) }
             LaunchedEffect(Unit) {
-                val ids = com.example.bookapp.data.Prefs.getBookmarks(context).toList()
+                val ids = Prefs.getBookmarks(context).toList()
                 items = if (ids.isEmpty()) emptyList() else db.searchDao().getByIds(ids)
             }
             BookmarksScreen(
@@ -96,7 +116,25 @@ fun AppNavigation(
             )
         }
 
-        composable(ROUTE_ABOUT) { AboutScreen(onBack = { navController.popBackStack() }) }
+        composable(ROUTE_ABOUT) {
+            var fieldsCount by remember { mutableIntStateOf(0) }
+            var taziehsCount by remember { mutableIntStateOf(0) }
+            var rolesCount by remember { mutableIntStateOf(0) }
+            var sectionsCount by remember { mutableIntStateOf(0) }
+            LaunchedEffect(Unit) {
+                fieldsCount = db.searchDao().countFields()
+                taziehsCount = db.searchDao().countTaziehs()
+                rolesCount = db.searchDao().countRoles()
+                sectionsCount = db.searchDao().countSections()
+            }
+            AboutScreen(
+                fieldsCount = fieldsCount,
+                taziehsCount = taziehsCount,
+                rolesCount = rolesCount,
+                sectionsCount = sectionsCount,
+                onBack = { navController.popBackStack() }
+            )
+        }
 
         composable(ROUTE_SETTINGS) {
             SettingsScreen(
@@ -177,19 +215,20 @@ fun AppNavigation(
             val sectionId = backStackEntry.arguments?.getString("sectionId")?.toLongOrNull() ?: 0L
             var title by remember { mutableStateOf("") }
             var content by remember { mutableStateOf("") }
-            var bookmarked by remember { mutableStateOf(com.example.bookapp.data.Prefs.isBookmarked(context, sectionId)) }
+            var bookmarked by remember { mutableStateOf(Prefs.isBookmarked(context, sectionId)) }
             LaunchedEffect(sectionId) {
                 val section = db.sectionDao().getById(sectionId)
                 title = section.title
                 content = section.content
-                bookmarked = com.example.bookapp.data.Prefs.isBookmarked(context, sectionId)
+                bookmarked = Prefs.isBookmarked(context, sectionId)
+                Prefs.addRecent(context, sectionId)
             }
             TextScreen(
                 title = title,
                 content = content,
                 isBookmarked = bookmarked,
                 onToggleBookmark = {
-                    bookmarked = com.example.bookapp.data.Prefs.toggleBookmark(context, sectionId)
+                    bookmarked = Prefs.toggleBookmark(context, sectionId)
                 },
                 onBack = { navController.popBackStack() }
             )
