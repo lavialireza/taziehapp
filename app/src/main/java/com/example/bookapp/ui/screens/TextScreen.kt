@@ -87,6 +87,7 @@ private fun shareText(context: Context, title: String, content: String) {
  * حالت مطالعه حرفه‌ای: امکان سوایپ (کشیدن انگشت) بین بخش‌های یک نقش،
  * بدون نیاز به برگشتن به فهرست بعد از هر بخش.
  */
+ @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun TextPagerScreen(
     sections: List<com.example.bookapp.data.SectionEntity>,
