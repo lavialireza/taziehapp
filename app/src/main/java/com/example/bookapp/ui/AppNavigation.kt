@@ -124,8 +124,14 @@ fun AppNavigation(
         }
 
         composable(ROUTE_SEARCH) {
+            var fields by remember { mutableStateOf(listOf<com.example.bookapp.data.FieldEntity>()) }
+            LaunchedEffect(Unit) { fields = db.fieldDao().getAll() }
             SearchScreen(
-                onSearch = { query -> db.searchDao().search(query) },
+                fields = fields,
+                onSearch = { query, fieldId ->
+                    if (fieldId == null) db.searchDao().search(query)
+                    else db.searchDao().searchInField(query, fieldId)
+                },
                 onResultClick = { result -> navController.navigate("text/${result.sectionId}") },
                 onBack = { navController.popBackStack() }
             )
@@ -185,6 +191,8 @@ fun AppNavigation(
                 taziehsCount = taziehsCount,
                 rolesCount = rolesCount,
                 sectionsCount = sectionsCount,
+                readCount = Prefs.getReadSectionsCount(context),
+                streakDays = Prefs.getStreakDays(context),
                 onBack = { navController.popBackStack() }
             )
         }
@@ -254,6 +262,7 @@ fun AppNavigation(
             val roleId = backStackEntry.arguments?.getString("roleId")?.toLongOrNull() ?: 0L
             val roleTitle = backStackEntry.arguments?.getString("roleTitle") ?: ""
             var items by remember { mutableStateOf(listOf<ListItemData>()) }
+            val scope = androidx.compose.runtime.rememberCoroutineScope()
             LaunchedEffect(roleId) {
                 items = db.sectionDao().getByRole(roleId).map { ListItemData(it.id, it.title) }
             }
@@ -264,7 +273,19 @@ fun AppNavigation(
                     val index = items.indexOfFirst { it.id == clicked.id }.coerceAtLeast(0)
                     navController.navigate("text_pager/$roleId/$index")
                 },
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                floatingAction = {
+                    androidx.compose.material3.ExtendedFloatingActionButton(
+                        text = { androidx.compose.material3.Text("خروجی PDF") },
+                        icon = { androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Filled.Share, contentDescription = null) },
+                        onClick = {
+                            scope.launch {
+                                val fullSections = db.sectionDao().getByRole(roleId)
+                                com.example.bookapp.data.exportRoleToPdf(context, roleTitle, fullSections)
+                            }
+                        }
+                    )
+                }
             )
         }
 
@@ -285,7 +306,10 @@ fun AppNavigation(
                         Prefs.toggleBookmark(context, id)
                         bookmarkVersion++
                     },
-                    onPageShown = { id -> Prefs.addRecent(context, id) },
+                    onPageShown = { id ->
+                        Prefs.addRecent(context, id)
+                        Prefs.markSectionRead(context, id)
+                    },
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -302,6 +326,7 @@ fun AppNavigation(
                 content = section.content
                 bookmarked = Prefs.isBookmarked(context, sectionId)
                 Prefs.addRecent(context, sectionId)
+                Prefs.markSectionRead(context, sectionId)
             }
             TextScreen(
                 title = title,
