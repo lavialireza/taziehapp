@@ -1,5 +1,6 @@
 package com.example.bookapp.ui
-
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -277,7 +278,7 @@ fun AppNavigation(
                 floatingAction = {
                     androidx.compose.material3.ExtendedFloatingActionButton(
                         text = { androidx.compose.material3.Text("خروجی PDF") },
-                        icon = { androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Filled.Share, contentDescription = null) },
+                        icon = { androidx.compose.material3.Icon(Icons.Filled.Share, contentDescription = null) },
                         onClick = {
                             scope.launch {
                                 val fullSections = db.sectionDao().getByRole(roleId)
