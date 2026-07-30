@@ -23,6 +23,7 @@ import com.example.bookapp.ui.screens.*
 import kotlinx.coroutines.launch
 
 private const val ROUTE_SPLASH = "splash"
+private const val ROUTE_ONBOARDING = "onboarding"
 private const val ROUTE_LOGIN = "login"
 private const val ROUTE_MAIN_MENU = "main_menu"
 private const val ROUTE_SEARCH = "search"
@@ -43,30 +44,52 @@ fun AppNavigation(
     darkMode: Boolean,
     onDarkModeChange: (Boolean) -> Unit,
     fontScale: Float,
-    onFontScaleChange: (Float) -> Unit
+    onFontScaleChange: (Float) -> Unit,
+    themeChoice: String,
+    onThemeChoiceChange: (String) -> Unit,
+    fontChoice: String,
+    onFontChoiceChange: (String) -> Unit,
+    shortcutTarget: String?
 ) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
     val navController: NavHostController = rememberNavController()
 
-    // بارگذاری اولیه داده‌ها از assets/sample_data.json در صورت خالی بودن دیتابیس
     LaunchedEffect(Unit) {
         seedDatabaseIfEmpty(context, db)
+    }
+
+    // مقصد بعد از ورود: اگر از میان‌بر آیکون باز شده باشد، مستقیم به آن صفحه می‌رویم
+    fun postLoginRoute(): String = when (shortcutTarget) {
+        "search" -> ROUTE_SEARCH
+        "notes" -> ROUTE_NOTES
+        "bookmarks" -> ROUTE_BOOKMARKS
+        else -> ROUTE_MAIN_MENU
     }
 
     NavHost(navController = navController, startDestination = ROUTE_SPLASH) {
 
         composable(ROUTE_SPLASH) {
             SplashScreen(onFinished = {
-                navController.navigate(ROUTE_LOGIN) {
+                val next = if (Prefs.isOnboardingShown(context)) ROUTE_LOGIN else ROUTE_ONBOARDING
+                navController.navigate(next) {
                     popUpTo(ROUTE_SPLASH) { inclusive = true }
+                }
+            })
+        }
+
+        composable(ROUTE_ONBOARDING) {
+            OnboardingScreen(onFinished = {
+                Prefs.setOnboardingShown(context)
+                navController.navigate(ROUTE_LOGIN) {
+                    popUpTo(ROUTE_ONBOARDING) { inclusive = true }
                 }
             })
         }
 
         composable(ROUTE_LOGIN) {
             LoginScreen(onLoginSuccess = {
-                navController.navigate(ROUTE_MAIN_MENU) {
+                navController.navigate(postLoginRoute()) {
                     popUpTo(ROUTE_LOGIN) { inclusive = true }
                 }
             })
@@ -172,14 +195,18 @@ fun AppNavigation(
                 onDarkModeChange = onDarkModeChange,
                 fontScale = fontScale,
                 onFontScaleChange = onFontScaleChange,
+                fontChoice = fontChoice,
+                onFontChoiceChange = onFontChoiceChange,
+                themeChoice = themeChoice,
+                onThemeChoiceChange = onThemeChoiceChange,
                 onSyncContent = { syncRemoteContent(db) },
+                db = db,
                 onBack = { navController.popBackStack() }
             )
         }
 
         composable(ROUTE_VERSION) { VersionScreen(onBack = { navController.popBackStack() }) }
 
-        // سطح ۱: فهرست زمینه‌ها
         composable(ROUTE_FIELDS) {
             var items by remember { mutableStateOf(listOf<ListItemData>()) }
             LaunchedEffect(Unit) {
@@ -193,7 +220,6 @@ fun AppNavigation(
             )
         }
 
-        // سطح ۲: فهرست تعزیه‌ها
         composable(ROUTE_TAZIEHS) { backStackEntry ->
             val fieldId = backStackEntry.arguments?.getString("fieldId")?.toLongOrNull() ?: 0L
             val fieldTitle = backStackEntry.arguments?.getString("fieldTitle") ?: ""
@@ -209,7 +235,6 @@ fun AppNavigation(
             )
         }
 
-        // سطح ۳: فهرست نقش‌ها
         composable(ROUTE_ROLES) { backStackEntry ->
             val taziehId = backStackEntry.arguments?.getString("taziehId")?.toLongOrNull() ?: 0L
             val taziehTitle = backStackEntry.arguments?.getString("taziehTitle") ?: ""
@@ -225,7 +250,6 @@ fun AppNavigation(
             )
         }
 
-        // سطح ۴: فهرست بخش‌ها (با ورود به حالت مطالعه سوایپ‌پذیر)
         composable(ROUTE_SECTIONS) { backStackEntry ->
             val roleId = backStackEntry.arguments?.getString("roleId")?.toLongOrNull() ?: 0L
             val roleTitle = backStackEntry.arguments?.getString("roleTitle") ?: ""
@@ -244,7 +268,6 @@ fun AppNavigation(
             )
         }
 
-        // حالت مطالعه سوایپ‌پذیر بین بخش‌های یک نقش
         composable(ROUTE_TEXT_PAGER) { backStackEntry ->
             val roleId = backStackEntry.arguments?.getString("roleId")?.toLongOrNull() ?: 0L
             val startIndex = backStackEntry.arguments?.getString("startIndex")?.toIntOrNull() ?: 0
@@ -268,7 +291,6 @@ fun AppNavigation(
             }
         }
 
-        // نمایش تکی متن یک بخش (برای جستجو، علاقه‌مندی‌ها، اخیراً مشاهده‌شده و بیت تصادفی)
         composable(ROUTE_TEXT) { backStackEntry ->
             val sectionId = backStackEntry.arguments?.getString("sectionId")?.toLongOrNull() ?: 0L
             var title by remember { mutableStateOf("") }
