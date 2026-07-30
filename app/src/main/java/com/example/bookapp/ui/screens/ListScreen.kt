@@ -29,7 +29,10 @@ fun GenericListScreen(
     items: List<ListItemData>,
     onItemClick: (ListItemData) -> Unit,
     onBack: (() -> Unit)? = null,
-    floatingAction: (@Composable () -> Unit)? = null
+    floatingAction: (@Composable () -> Unit)? = null,
+    selectedIds: Set<Long> = emptySet(),
+    onToggleSelect: ((ListItemData) -> Unit)? = null,
+    topBarAction: (@Composable () -> Unit)? = null
 ) {
     Scaffold(
         topBar = {
@@ -41,7 +44,8 @@ fun GenericListScreen(
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "بازگشت")
                         }
                     }
-                }
+                },
+                actions = { topBarAction?.invoke() }
             )
         },
         floatingActionButton = { floatingAction?.invoke() }
@@ -57,7 +61,13 @@ fun GenericListScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(items) { item ->
-                    ListCard(item = item, onClick = { onItemClick(item) })
+                    ListCard(
+                        item = item,
+                        selected = item.id in selectedIds,
+                        onClick = {
+                            if (onToggleSelect != null) onToggleSelect(item) else onItemClick(item)
+                        }
+                    )
                 }
             }
         }
@@ -65,12 +75,14 @@ fun GenericListScreen(
 }
 
 @Composable
-private fun ListCard(item: ListItemData, onClick: () -> Unit) {
+private fun ListCard(item: ListItemData, selected: Boolean = false, onClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
         Box {
             DecorativePattern(

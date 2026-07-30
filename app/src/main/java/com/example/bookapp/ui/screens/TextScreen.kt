@@ -12,14 +12,17 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.bookapp.data.Prefs
 import com.example.bookapp.data.SpeechHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -29,19 +32,27 @@ fun TextScreen(
     content: String,
     isBookmarked: Boolean,
     onToggleBookmark: () -> Unit,
+    sectionId: Long? = null,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
     val speechHelper = remember { SpeechHelper(context) }
     var isSpeaking by remember { mutableStateOf(false) }
+    var tag by remember(sectionId) { mutableStateOf(sectionId?.let { Prefs.getTag(context, it) }) }
+    var showTagDialog by remember { mutableStateOf(false) }
+
+    // حالت تمام‌صفحه: نوار بالا هنگام اسکرول به پایین جمع می‌شود
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     DisposableEffect(Unit) {
         onDispose { speechHelper.shutdown() }
     }
 
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
+                scrollBehavior = scrollBehavior,
                 title = { Text(title) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -62,6 +73,11 @@ fun TextScreen(
                             if (isSpeaking) Icons.Filled.Stop else Icons.Filled.PlayArrow,
                             contentDescription = if (isSpeaking) "توقف خواندن" else "خواندن صوتی"
                         )
+                    }
+                    if (sectionId != null) {
+                        IconButton(onClick = { showTagDialog = true }) {
+                            Icon(Icons.Filled.Label, contentDescription = "برچسب شخصی")
+                        }
                     }
                     IconButton(onClick = onToggleBookmark) {
                         Icon(
@@ -86,8 +102,39 @@ fun TextScreen(
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
+            if (!tag.isNullOrBlank()) {
+                AssistChip(onClick = { showTagDialog = true }, label = { Text(tag!!) })
+                Spacer(Modifier.height(8.dp))
+            }
             Text(content, style = MaterialTheme.typography.bodyLarge)
         }
+    }
+
+    if (showTagDialog && sectionId != null) {
+        var input by remember { mutableStateOf(tag ?: "") }
+        AlertDialog(
+            onDismissRequest = { showTagDialog = false },
+            title = { Text("برچسب شخصی") },
+            text = {
+                OutlinedTextField(
+                    value = input,
+                    onValueChange = { input = it },
+                    label = { Text("مثلاً: حفظ کنم، برای مجلس بعدی") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    Prefs.setTag(context, sectionId, input)
+                    tag = input.ifBlank { null }
+                    showTagDialog = false
+                }) { Text("ذخیره") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTagDialog = false }) { Text("انصراف") }
+            }
+        )
     }
 }
 
@@ -138,6 +185,7 @@ fun TextPagerScreen(
                 content = section.content,
                 isBookmarked = isBookmarked(section.id),
                 onToggleBookmark = { onToggleBookmark(section.id) },
+                sectionId = section.id,
                 onBack = onBack
             )
         }
