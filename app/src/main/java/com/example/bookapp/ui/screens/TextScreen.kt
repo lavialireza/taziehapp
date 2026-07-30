@@ -12,12 +12,15 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.bookapp.data.SpeechHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,6 +32,12 @@ fun TextScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
+    val speechHelper = remember { SpeechHelper(context) }
+    var isSpeaking by remember { mutableStateOf(false) }
+
+    DisposableEffect(Unit) {
+        onDispose { speechHelper.shutdown() }
+    }
 
     Scaffold(
         topBar = {
@@ -40,6 +49,20 @@ fun TextScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = {
+                        if (isSpeaking) {
+                            speechHelper.stop()
+                            isSpeaking = false
+                        } else {
+                            speechHelper.speak(content)
+                            isSpeaking = true
+                        }
+                    }) {
+                        Icon(
+                            if (isSpeaking) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                            contentDescription = if (isSpeaking) "توقف خواندن" else "خواندن صوتی"
+                        )
+                    }
                     IconButton(onClick = onToggleBookmark) {
                         Icon(
                             if (isBookmarked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
@@ -87,7 +110,7 @@ private fun shareText(context: Context, title: String, content: String) {
  * حالت مطالعه حرفه‌ای: امکان سوایپ (کشیدن انگشت) بین بخش‌های یک نقش،
  * بدون نیاز به برگشتن به فهرست بعد از هر بخش.
  */
- @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun TextPagerScreen(
     sections: List<com.example.bookapp.data.SectionEntity>,
@@ -101,7 +124,7 @@ fun TextPagerScreen(
         initialPage = startIndex.coerceIn(0, (sections.size - 1).coerceAtLeast(0))
     ) { sections.size }
 
-    androidx.compose.runtime.LaunchedEffect(pagerState.currentPage) {
+    LaunchedEffect(pagerState.currentPage) {
         if (sections.isNotEmpty()) {
             onPageShown(sections[pagerState.currentPage].id)
         }

@@ -9,7 +9,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.bookapp.BuildConfig
+import com.example.bookapp.data.AppDatabase
 import com.example.bookapp.data.Prefs
+import com.example.bookapp.data.exportBackup
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,12 +58,18 @@ fun SettingsScreen(
     onDarkModeChange: (Boolean) -> Unit,
     fontScale: Float,
     onFontScaleChange: (Float) -> Unit,
+    fontChoice: String,
+    onFontChoiceChange: (String) -> Unit,
+    themeChoice: String,
+    onThemeChoiceChange: (String) -> Unit,
     onSyncContent: suspend () -> Result<Unit>,
+    db: AppDatabase,
     onBack: () -> Unit
 ) {
     var syncing by remember { mutableStateOf(false) }
     var syncMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -90,7 +98,6 @@ fun SettingsScreen(
 
             Text("سایز متن", style = MaterialTheme.typography.bodyLarge)
             Spacer(Modifier.height(8.dp))
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -99,6 +106,30 @@ fun SettingsScreen(
                 FontSizeOption("متوسط", 1.0f, fontScale, onFontScaleChange)
                 FontSizeOption("بزرگ", 1.3f, fontScale, onFontScaleChange)
                 FontSizeOption("خیلی بزرگ", 1.6f, fontScale, onFontScaleChange)
+            }
+
+            Spacer(Modifier.height(24.dp))
+            Text("تم رنگی", style = MaterialTheme.typography.bodyLarge)
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                ThemeOption("طلایی", "default", themeChoice, onThemeChoiceChange)
+                ThemeOption("سبز", "green", themeChoice, onThemeChoiceChange)
+                ThemeOption("قرمز", "red", themeChoice, onThemeChoiceChange)
+            }
+
+            Spacer(Modifier.height(24.dp))
+            Text("فونت متن", style = MaterialTheme.typography.bodyLarge)
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                com.example.bookapp.ui.theme.FontChoiceLabels.forEach { (key, label) ->
+                    ThemeOption(label, key, fontChoice, onFontChoiceChange)
+                }
             }
 
             Spacer(Modifier.height(32.dp))
@@ -135,6 +166,24 @@ fun SettingsScreen(
                 Spacer(Modifier.height(8.dp))
                 Text(it, style = MaterialTheme.typography.bodySmall)
             }
+
+            Spacer(Modifier.height(32.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(16.dp))
+
+            Text("پشتیبان‌گیری", style = MaterialTheme.typography.bodyLarge)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "یادداشت‌ها و علاقه‌مندی‌های خود را در یک فایل متنی ذخیره یا اشتراک‌گذاری کنید (مثلاً برای وقتی گوشی عوض می‌کنید).",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(12.dp))
+            Button(onClick = {
+                scope.launch { exportBackup(context, db) }
+            }) {
+                Text("خروجی گرفتن از یادداشت‌ها و علاقه‌مندی‌ها")
+            }
         }
     }
 }
@@ -144,6 +193,15 @@ private fun FontSizeOption(label: String, value: Float, current: Float, onSelect
     val selected = kotlin.math.abs(current - value) < 0.01f
     FilterChip(
         selected = selected,
+        onClick = { onSelect(value) },
+        label = { Text(label) }
+    )
+}
+
+@Composable
+private fun ThemeOption(label: String, value: String, current: String, onSelect: (String) -> Unit) {
+    FilterChip(
+        selected = current == value,
         onClick = { onSelect(value) },
         label = { Text(label) }
     )

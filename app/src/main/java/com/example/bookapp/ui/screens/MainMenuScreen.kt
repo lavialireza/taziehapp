@@ -15,10 +15,16 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import com.example.bookapp.data.SearchResult
+
+// رنگ سبز اختصاصی برای گزینه «لیست تعزیه‌ها» (مستقل از تم انتخابی)
+private val TaziehGreen = Color(0xFF2E7D4F)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,13 +48,14 @@ fun MainMenuScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
+                .padding(horizontal = 14.dp)
         ) {
 
             if (randomVerse != null) {
+                Spacer(Modifier.height(14.dp))
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
                         .clickable { onItemClick(randomVerse) },
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
@@ -76,67 +83,88 @@ fun MainMenuScreen(
                 }
             }
 
-            ListItem(
-                headlineContent = { Text("لیست تعزیه‌ها") },
-                leadingContent = { Icon(Icons.Filled.List, contentDescription = null) },
-                modifier = Modifier.clickable { onOpenTaziehList() }
-            )
-            HorizontalDivider()
-            ListItem(
-                headlineContent = { Text("جستجو") },
-                leadingContent = { Icon(Icons.Filled.Search, contentDescription = null) },
-                modifier = Modifier.clickable { onOpenSearch() }
-            )
-            HorizontalDivider()
-            ListItem(
-                headlineContent = { Text("علاقه‌مندی‌ها") },
-                leadingContent = { Icon(Icons.Filled.Favorite, contentDescription = null) },
-                modifier = Modifier.clickable { onOpenBookmarks() }
-            )
-            HorizontalDivider()
-            ListItem(
-                headlineContent = { Text("دفتر یادداشت") },
-                leadingContent = { Icon(Icons.Filled.Edit, contentDescription = null) },
-                modifier = Modifier.clickable { onOpenNotes() }
-            )
-            HorizontalDivider()
-            ListItem(
-                headlineContent = { Text("درباره برنامه") },
-                leadingContent = { Icon(Icons.Filled.Info, contentDescription = null) },
-                modifier = Modifier.clickable { onOpenAbout() }
-            )
-            HorizontalDivider()
-            ListItem(
-                headlineContent = { Text("تنظیمات") },
-                leadingContent = { Icon(Icons.Filled.Settings, contentDescription = null) },
-                modifier = Modifier.clickable { onOpenSettings() }
-            )
-            HorizontalDivider()
-            ListItem(
-                headlineContent = { Text("ورژن برنامه") },
-                modifier = Modifier.clickable { onOpenVersion() }
-            )
-            HorizontalDivider()
+            Spacer(Modifier.height(14.dp))
+
+            MenuCard("لیست تعزیه‌ها", Icons.Filled.List, onOpenTaziehList, accentColor = TaziehGreen)
+            Spacer(Modifier.height(10.dp))
+            MenuCard("جستجو", Icons.Filled.Search, onOpenSearch)
+            Spacer(Modifier.height(10.dp))
+            MenuCard("علاقه‌مندی‌ها", Icons.Filled.Favorite, onOpenBookmarks)
+            Spacer(Modifier.height(10.dp))
+            MenuCard("دفتر یادداشت", Icons.Filled.Edit, onOpenNotes)
+            Spacer(Modifier.height(10.dp))
+            MenuCard("درباره برنامه", Icons.Filled.Info, onOpenAbout)
+            Spacer(Modifier.height(10.dp))
+            MenuCard("تنظیمات", Icons.Filled.Settings, onOpenSettings)
+            Spacer(Modifier.height(10.dp))
+            MenuCard("ورژن برنامه", null, onOpenVersion)
 
             if (recentItems.isNotEmpty()) {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(20.dp))
                 Text(
                     "اخیراً مشاهده‌شده",
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    style = MaterialTheme.typography.titleSmall
                 )
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(8.dp))
                 recentItems.forEach { item ->
-                    ListItem(
-                        headlineContent = { Text(item.sectionTitle) },
-                        supportingContent = { Text("${item.taziehTitle} ← ${item.roleTitle}") },
-                        leadingContent = { Icon(Icons.Filled.History, contentDescription = null) },
-                        modifier = Modifier.clickable { onItemClick(item) }
-                    )
-                    HorizontalDivider()
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                            .clickable { onItemClick(item) },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Filled.History, contentDescription = null)
+                            Spacer(Modifier.width(10.dp))
+                            Column {
+                                Text(item.sectionTitle, style = MaterialTheme.typography.bodyLarge)
+                                Text(
+                                    "${item.taziehTitle} ← ${item.roleTitle}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
                 }
                 Spacer(Modifier.height(16.dp))
             }
+        }
+    }
+}
+
+@Composable
+private fun MenuCard(
+    title: String,
+    icon: ImageVector?,
+    onClick: () -> Unit,
+    accentColor: Color? = null
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable { onClick() },
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = accentColor?.copy(alpha = 0.14f) ?: MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (icon != null) {
+                Icon(icon, contentDescription = null, tint = accentColor ?: MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.width(12.dp))
+            }
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                color = accentColor ?: MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
