@@ -113,4 +113,38 @@ object Prefs {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit().putString(KEY_FONT_CHOICE, value).apply()
     }
+
+    private const val KEY_READ_SECTIONS = "read_sections"
+    private const val KEY_LAST_READ_DAY = "last_read_day"
+    private const val KEY_STREAK_DAYS = "streak_days"
+
+    /** ثبت اینکه یک بخش خوانده شده (برای آمار تعداد کل)، و به‌روزرسانی روزهای متوالی مطالعه */
+    fun markSectionRead(context: Context, sectionId: Long) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val current = prefs.getStringSet(KEY_READ_SECTIONS, emptySet())?.toMutableSet() ?: mutableSetOf()
+        current.add(sectionId.toString())
+        prefs.edit().putStringSet(KEY_READ_SECTIONS, current).apply()
+
+        val today = (System.currentTimeMillis() / 86_400_000L).toInt() // شماره روز از epoch
+        val lastDay = prefs.getInt(KEY_LAST_READ_DAY, -1)
+        val streak = prefs.getInt(KEY_STREAK_DAYS, 0)
+        when {
+            lastDay == today -> { /* همان روز، تغییری لازم نیست */ }
+            lastDay == today - 1 -> prefs.edit().putInt(KEY_STREAK_DAYS, streak + 1).putInt(KEY_LAST_READ_DAY, today).apply()
+            else -> prefs.edit().putInt(KEY_STREAK_DAYS, 1).putInt(KEY_LAST_READ_DAY, today).apply()
+        }
+    }
+
+    fun getReadSectionsCount(context: Context): Int {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getStringSet(KEY_READ_SECTIONS, emptySet())?.size ?: 0
+    }
+
+    fun getStreakDays(context: Context): Int {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val today = (System.currentTimeMillis() / 86_400_000L).toInt()
+        val lastDay = prefs.getInt(KEY_LAST_READ_DAY, -1)
+        // اگر بیش از یک روز از آخرین مطالعه گذشته، زنجیره شکسته است
+        return if (lastDay == today || lastDay == today - 1) prefs.getInt(KEY_STREAK_DAYS, 0) else 0
+    }
 }
