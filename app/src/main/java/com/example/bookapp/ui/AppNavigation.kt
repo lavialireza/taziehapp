@@ -40,6 +40,7 @@ private const val ROUTE_ROLES = "roles/{taziehId}/{taziehTitle}"
 private const val ROUTE_SECTIONS = "sections/{roleId}/{roleTitle}"
 private const val ROUTE_TEXT = "text/{sectionId}"
 private const val ROUTE_TEXT_PAGER = "text_pager/{roleId}/{startIndex}"
+private const val ROUTE_COMPARE = "compare/{roleAId}/{roleBId}"
 
 @Composable
 fun AppNavigation(
@@ -257,13 +258,67 @@ fun AppNavigation(
             val taziehId = backStackEntry.arguments?.getString("taziehId")?.toLongOrNull() ?: 0L
             val taziehTitle = backStackEntry.arguments?.getString("taziehTitle") ?: ""
             var items by remember { mutableStateOf(listOf<ListItemData>()) }
+            var compareMode by remember { mutableStateOf(false) }
+            var selectedIds by remember { mutableStateOf(setOf<Long>()) }
             LaunchedEffect(taziehId) {
                 items = db.roleDao().getByTazieh(taziehId).map { ListItemData(it.id, it.title) }
             }
             GenericListScreen(
-                screenTitle = taziehTitle,
+                screenTitle = if (compareMode) "دو نقش را انتخاب کنید" else taziehTitle,
                 items = items,
                 onItemClick = { navController.navigate("sections/${it.id}/${it.title}") },
+                onBack = {
+                    if (compareMode) {
+                        compareMode = false
+                        selectedIds = emptySet()
+                    } else {
+                        navController.popBackStack()
+                    }
+                },
+                selectedIds = selectedIds,
+                onToggleSelect = if (compareMode) { item ->
+                    selectedIds = if (item.id in selectedIds) {
+                        selectedIds - item.id
+                    } else if (selectedIds.size < 2) {
+                        selectedIds + item.id
+                    } else {
+                        selectedIds
+                    }
+                    if (selectedIds.size == 2) {
+                        val (a, b) = selectedIds.toList()
+                        compareMode = false
+                        navController.navigate("compare/$a/$b")
+                    }
+                } else null,
+                topBarAction = {
+                    androidx.compose.material3.TextButton(onClick = {
+                        compareMode = !compareMode
+                        selectedIds = emptySet()
+                    }) {
+                        androidx.compose.material3.Text(if (compareMode) "لغو" else "مقایسه")
+                    }
+                }
+            )
+        }
+
+        composable(ROUTE_COMPARE) { backStackEntry ->
+            val roleAId = backStackEntry.arguments?.getString("roleAId")?.toLongOrNull() ?: 0L
+            val roleBId = backStackEntry.arguments?.getString("roleBId")?.toLongOrNull() ?: 0L
+            var roleATitle by remember { mutableStateOf("") }
+            var roleBTitle by remember { mutableStateOf("") }
+            var roleASections by remember { mutableStateOf(listOf<SectionEntity>()) }
+            var roleBSections by remember { mutableStateOf(listOf<SectionEntity>()) }
+            LaunchedEffect(roleAId, roleBId) {
+                roleASections = db.sectionDao().getByRole(roleAId)
+                roleBSections = db.sectionDao().getByRole(roleBId)
+                roleATitle = db.roleDao().getById(roleAId).title
+                roleBTitle = db.roleDao().getById(roleBId).title
+            }
+            CompareScreen(
+                roleATitle = roleATitle.ifBlank { "نقش اول" },
+                roleASections = roleASections,
+                roleBTitle = roleBTitle.ifBlank { "نقش دوم" },
+                roleBSections = roleBSections,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -345,6 +400,7 @@ fun AppNavigation(
                 onToggleBookmark = {
                     bookmarked = Prefs.toggleBookmark(context, sectionId)
                 },
+                sectionId = sectionId,
                 onBack = { navController.popBackStack() }
             )
         }
