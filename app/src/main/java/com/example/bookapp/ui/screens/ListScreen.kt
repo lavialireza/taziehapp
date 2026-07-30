@@ -28,7 +28,8 @@ fun GenericListScreen(
     screenTitle: String,
     items: List<ListItemData>,
     onItemClick: (ListItemData) -> Unit,
-    onBack: (() -> Unit)? = null
+    onBack: (() -> Unit)? = null,
+    floatingAction: (@Composable () -> Unit)? = null
 ) {
     Scaffold(
         topBar = {
@@ -42,7 +43,8 @@ fun GenericListScreen(
                     }
                 }
             )
-        }
+        },
+        floatingActionButton = { floatingAction?.invoke() }
     ) { padding ->
         if (items.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {

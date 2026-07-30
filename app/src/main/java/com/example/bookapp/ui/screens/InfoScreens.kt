@@ -21,8 +21,11 @@ fun AboutScreen(
     taziehsCount: Int,
     rolesCount: Int,
     sectionsCount: Int,
+    readCount: Int,
+    streakDays: Int,
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
     Scaffold(
         topBar = {
             TopAppBar(
@@ -47,6 +50,28 @@ fun AboutScreen(
             Text("$taziehsCount تعزیه")
             Text("$rolesCount نقش")
             Text("$sectionsCount بخش")
+
+            Spacer(Modifier.height(20.dp))
+            Text("آمار مطالعه شما:", style = MaterialTheme.typography.titleSmall)
+            Spacer(Modifier.height(8.dp))
+            Text("$readCount بخش را تا الان خوانده‌اید")
+            if (streakDays > 1) {
+                Text("$streakDays روز متوالی سر زده‌اید 🔥")
+            }
+
+            Spacer(Modifier.height(24.dp))
+            Button(onClick = {
+                val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(
+                        android.content.Intent.EXTRA_TEXT,
+                        "این اپ رو ببین: «تعزیه و شبیه‌خوانی» — کتابخانه‌ای کامل و آفلاین از نسخه‌های تعزیه.\nhttps://github.com/lavialireza/taziehapp"
+                    )
+                }
+                context.startActivity(android.content.Intent.createChooser(intent, "معرفی اپ به دیگران"))
+            }) {
+                Text("معرفی این اپ به دیگران")
+            }
         }
     }
 }
