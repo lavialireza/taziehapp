@@ -21,6 +21,9 @@ interface TaziehDao {
     @Query("SELECT * FROM taziehs WHERE fieldId = :fieldId ORDER BY id")
     suspend fun getByField(fieldId: Long): List<TaziehEntity>
 
+    @Query("SELECT * FROM taziehs ORDER BY fieldId, id")
+    suspend fun getAll(): List<TaziehEntity>
+
     @Insert
     suspend fun insert(tazieh: TaziehEntity): Long
 

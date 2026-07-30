@@ -70,6 +70,28 @@ interface SearchDao {
         INNER JOIN roles ON sections.roleId = roles.id
         INNER JOIN taziehs ON roles.taziehId = taziehs.id
         INNER JOIN fields ON taziehs.fieldId = fields.id
+        WHERE taziehs.id = :taziehId
+          AND (sections.title LIKE '%' || :query || '%'
+           OR sections.content LIKE '%' || :query || '%'
+           OR roles.title LIKE '%' || :query || '%')
+        ORDER BY roles.title
+        LIMIT 100
+        """
+    )
+    suspend fun searchInTazieh(query: String, taziehId: Long): List<SearchResult>
+
+    @Query(
+        """
+        SELECT
+            sections.id AS sectionId,
+            sections.title AS sectionTitle,
+            roles.title AS roleTitle,
+            taziehs.title AS taziehTitle,
+            fields.title AS fieldTitle
+        FROM sections
+        INNER JOIN roles ON sections.roleId = roles.id
+        INNER JOIN taziehs ON roles.taziehId = taziehs.id
+        INNER JOIN fields ON taziehs.fieldId = fields.id
         WHERE sections.id IN (:ids)
         """
     )
