@@ -75,4 +75,42 @@ object Prefs {
         val trimmed = current.take(MAX_RECENT)
         prefs.edit().putString(KEY_RECENT, trimmed.joinToString(",")).apply()
     }
+
+    private const val KEY_THEME = "theme_choice"
+
+    /** یکی از سه مقدار: "default"، "green"، "red" */
+    fun getThemeChoice(context: Context): String {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getString(KEY_THEME, "default") ?: "default"
+    }
+
+    fun setThemeChoice(context: Context, value: String) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putString(KEY_THEME, value).apply()
+    }
+
+    private const val KEY_ONBOARDING_SHOWN = "onboarding_shown"
+
+    fun isOnboardingShown(context: Context): Boolean {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getBoolean(KEY_ONBOARDING_SHOWN, false)
+    }
+
+    fun setOnboardingShown(context: Context) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putBoolean(KEY_ONBOARDING_SHOWN, true).apply()
+    }
+
+    private const val KEY_FONT_CHOICE = "font_choice"
+
+    /** یکی از مقادیر "titr"، "serif"، "sans"، "cursive" */
+    fun getFontChoice(context: Context): String {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getString(KEY_FONT_CHOICE, "titr") ?: "titr"
+    }
+
+    fun setFontChoice(context: Context, value: String) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putString(KEY_FONT_CHOICE, value).apply()
+    }
 }
