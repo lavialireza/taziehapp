@@ -36,6 +36,9 @@ interface RoleDao {
     @Query("SELECT * FROM roles WHERE taziehId = :taziehId ORDER BY id")
     suspend fun getByTazieh(taziehId: Long): List<RoleEntity>
 
+    @Query("SELECT * FROM roles WHERE id = :roleId")
+    suspend fun getById(roleId: Long): RoleEntity
+
     @Insert
     suspend fun insert(role: RoleEntity): Long
 

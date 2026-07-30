@@ -147,4 +147,21 @@ object Prefs {
         // اگر بیش از یک روز از آخرین مطالعه گذشته، زنجیره شکسته است
         return if (lastDay == today || lastDay == today - 1) prefs.getInt(KEY_STREAK_DAYS, 0) else 0
     }
+
+    private const val KEY_TAG_PREFIX = "tag_"
+
+    /** برچسب شخصی یک بخش (مثلاً «حفظ کنم» یا «برای مجلس بعدی») را برمی‌گرداند، یا null اگر برچسبی نداشته باشد */
+    fun getTag(context: Context, sectionId: Long): String? {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getString("$KEY_TAG_PREFIX$sectionId", null)?.takeIf { it.isNotBlank() }
+    }
+
+    fun setTag(context: Context, sectionId: Long, tag: String) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        if (tag.isBlank()) {
+            prefs.edit().remove("$KEY_TAG_PREFIX$sectionId").apply()
+        } else {
+            prefs.edit().putString("$KEY_TAG_PREFIX$sectionId", tag.trim()).apply()
+        }
+    }
 }
