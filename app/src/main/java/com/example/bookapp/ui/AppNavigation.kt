@@ -1,4 +1,5 @@
 package com.example.bookapp.ui
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.runtime.Composable
@@ -126,12 +127,20 @@ fun AppNavigation(
 
         composable(ROUTE_SEARCH) {
             var fields by remember { mutableStateOf(listOf<com.example.bookapp.data.FieldEntity>()) }
-            LaunchedEffect(Unit) { fields = db.fieldDao().getAll() }
+            var allTaziehs by remember { mutableStateOf(listOf<com.example.bookapp.data.TaziehEntity>()) }
+            LaunchedEffect(Unit) {
+                fields = db.fieldDao().getAll()
+                allTaziehs = db.taziehDao().getAll()
+            }
             SearchScreen(
                 fields = fields,
-                onSearch = { query, fieldId ->
-                    if (fieldId == null) db.searchDao().search(query)
-                    else db.searchDao().searchInField(query, fieldId)
+                allTaziehs = allTaziehs,
+                onSearch = { query, fieldId, taziehId ->
+                    when {
+                        taziehId != null -> db.searchDao().searchInTazieh(query, taziehId)
+                        fieldId != null -> db.searchDao().searchInField(query, fieldId)
+                        else -> db.searchDao().search(query)
+                    }
                 },
                 onResultClick = { result -> navController.navigate("text/${result.sectionId}") },
                 onBack = { navController.popBackStack() }
