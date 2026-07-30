@@ -6,8 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -15,41 +13,34 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import com.example.bookapp.data.Prefs
 import com.example.bookapp.ui.AppNavigation
-import com.example.bookapp.ui.theme.TaziehTypography
-
-// طرح رنگی حالت شب واقعی: پس‌زمینه مشکی خالص و متن کرم‌رنگ ملایم (مناسب مطالعه طولانی)
-private val TrueNightColorScheme = darkColorScheme(
-    background = Color.Black,
-    surface = Color.Black,
-    surfaceVariant = Color(0xFF1A1A1A),
-    onBackground = Color(0xFFEFE0C0),
-    onSurface = Color(0xFFEFE0C0),
-    onSurfaceVariant = Color(0xFFC9BFA6),
-    primary = Color(0xFFD4A94A),
-    onPrimary = Color.Black,
-    primaryContainer = Color(0xFF2A230F),
-    onPrimaryContainer = Color(0xFFEFE0C0)
-)
+import com.example.bookapp.ui.theme.colorSchemeFor
+import com.example.bookapp.ui.theme.typographyFor
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // اگر اپ از طریق میان‌بر فشار طولانی روی آیکون باز شده، مقصد را می‌خوانیم
+        val shortcutTarget = intent?.getStringExtra("shortcut_target")
+
         setContent {
             var darkMode by remember { mutableStateOf(Prefs.isDarkMode(this)) }
             var fontScale by remember { mutableFloatStateOf(Prefs.getFontScale(this)) }
+            var themeChoice by remember { mutableStateOf(Prefs.getThemeChoice(this)) }
+            var fontChoice by remember { mutableStateOf(Prefs.getFontChoice(this)) }
 
-            val colorScheme = if (darkMode) TrueNightColorScheme else lightColorScheme()
+            val colorScheme = colorSchemeFor(themeChoice, darkMode)
+            val typography = typographyFor(fontChoice)
             val baseDensity = LocalDensity.current
             val scaledDensity = androidx.compose.ui.unit.Density(
                 density = baseDensity.density,
                 fontScale = baseDensity.fontScale * fontScale
             )
 
-            MaterialTheme(colorScheme = colorScheme, typography = TaziehTypography) {
+            MaterialTheme(colorScheme = colorScheme, typography = typography) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     CompositionLocalProvider(LocalDensity provides scaledDensity) {
                         AppNavigation(
@@ -62,7 +53,18 @@ class MainActivity : ComponentActivity() {
                             onFontScaleChange = {
                                 fontScale = it
                                 Prefs.setFontScale(this, it)
-                            }
+                            },
+                            themeChoice = themeChoice,
+                            onThemeChoiceChange = {
+                                themeChoice = it
+                                Prefs.setThemeChoice(this, it)
+                            },
+                            fontChoice = fontChoice,
+                            onFontChoiceChange = {
+                                fontChoice = it
+                                Prefs.setFontChoice(this, it)
+                            },
+                            shortcutTarget = shortcutTarget
                         )
                     }
                 }
