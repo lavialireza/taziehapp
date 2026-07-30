@@ -13,12 +13,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.bookapp.data.FieldEntity
 import com.example.bookapp.data.SearchResult
+import com.example.bookapp.data.TaziehEntity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
     fields: List<FieldEntity>,
-    onSearch: suspend (String, Long?) -> List<SearchResult>,
+    allTaziehs: List<TaziehEntity>,
+    onSearch: suspend (query: String, fieldId: Long?, taziehId: Long?) -> List<SearchResult>,
     onResultClick: (SearchResult) -> Unit,
     onBack: () -> Unit
 ) {
@@ -26,6 +28,11 @@ fun SearchScreen(
     var results by remember { mutableStateOf(listOf<SearchResult>()) }
     var searched by remember { mutableStateOf(false) }
     var selectedFieldId by remember { mutableStateOf<Long?>(null) }
+    var selectedTaziehId by remember { mutableStateOf<Long?>(null) }
+
+    val taziehsForField = remember(selectedFieldId, allTaziehs) {
+        if (selectedFieldId == null) emptyList() else allTaziehs.filter { it.fieldId == selectedFieldId }
+    }
 
     Scaffold(
         topBar = {
@@ -55,23 +62,52 @@ fun SearchScreen(
                 item {
                     FilterChip(
                         selected = selectedFieldId == null,
-                        onClick = { selectedFieldId = null },
+                        onClick = {
+                            selectedFieldId = null
+                            selectedTaziehId = null
+                        },
                         label = { Text("همه زمینه‌ها") }
                     )
                 }
                 items(fields) { field ->
                     FilterChip(
                         selected = selectedFieldId == field.id,
-                        onClick = { selectedFieldId = field.id },
+                        onClick = {
+                            selectedFieldId = field.id
+                            selectedTaziehId = null
+                        },
                         label = { Text(field.title) }
                     )
                 }
             }
+
+            if (taziehsForField.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    item {
+                        FilterChip(
+                            selected = selectedTaziehId == null,
+                            onClick = { selectedTaziehId = null },
+                            label = { Text("همه تعزیه‌ها") }
+                        )
+                    }
+                    items(taziehsForField) { tazieh ->
+                        FilterChip(
+                            selected = selectedTaziehId == tazieh.id,
+                            onClick = { selectedTaziehId = tazieh.id },
+                            label = { Text(tazieh.title) }
+                        )
+                    }
+                }
+            }
             Spacer(Modifier.height(8.dp))
 
-            LaunchedEffect(query, selectedFieldId) {
+            LaunchedEffect(query, selectedFieldId, selectedTaziehId) {
                 if (query.trim().length >= 2) {
-                    results = onSearch(query.trim(), selectedFieldId)
+                    results = onSearch(query.trim(), selectedFieldId, selectedTaziehId)
                     searched = true
                 } else {
                     results = emptyList()
