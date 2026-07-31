@@ -36,8 +36,28 @@ fun TextScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val speechHelper = remember { SpeechHelper(context) }
     var isSpeaking by remember { mutableStateOf(false) }
+    var statusMessage by remember { mutableStateOf<String?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    val speechHelper = remember {
+        SpeechHelper(context) { status ->
+            when (status) {
+                "no_engine" -> statusMessage = "موتور خواندن صوتی روی این گوشی در دسترس نیست"
+                "no_persian_voice" -> statusMessage = "صدای فارسی روی این گوشی نصب نیست (به تنظیمات گوشی مراجعه کنید)"
+                "error" -> statusMessage = "خطا در پخش صدا"
+            }
+            if (status == "done" || status == "error") isSpeaking = false
+        }
+    }
+
+    LaunchedEffect(statusMessage) {
+        statusMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            isSpeaking = false
+            statusMessage = null
+        }
+    }
     var tag by remember(sectionId) { mutableStateOf(sectionId?.let { Prefs.getTag(context, it) }) }
     var showTagDialog by remember { mutableStateOf(false) }
 
@@ -50,6 +70,7 @@ fun TextScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 scrollBehavior = scrollBehavior,
