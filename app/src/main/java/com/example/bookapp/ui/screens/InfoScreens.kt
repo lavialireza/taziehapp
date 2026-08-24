@@ -44,7 +44,13 @@ fun AboutScreen(
             )
         }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
             Text(
                 "این اپلیکیشن یک کتابخانه دیجیتال از متون تعزیه است که بر اساس " +
                         "زمینه، تعزیه، نقش و بخش دسته‌بندی شده است."
@@ -85,11 +91,11 @@ fun AboutScreen(
             Spacer(Modifier.height(24.dp))
             HorizontalDivider()
             Spacer(Modifier.height(16.dp))
-            Text("مشخصات نوینسنده برنامه و گردآوری", style = MaterialTheme.typography.titleSmall)
+            Text("مشخصات طراحی و گردآوری", style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.height(8.dp))
-            Text("نویسنده و گردآورنده: [مهندس علیرضا لاوی ]")
+            Text("طراح و گردآورنده: [نام خودتان را اینجا بنویسید]")
             Text("نسخه: ${BuildConfig.VERSION_NAME}")
-            Text("راه ارتباطی: alirezalavi65@gmail.com ")
+            Text("راه ارتباطی: [ایمیل یا شبکه اجتماعی]")
 
             Spacer(Modifier.height(24.dp))
             Button(onClick = {
